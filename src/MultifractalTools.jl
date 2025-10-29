@@ -1,5 +1,9 @@
 module MultifractalTools
 
-# Write your package code here.
+using LinearAlgebra
+using LsqFit
+using Statistics
+
+
 
 end
