@@ -86,4 +86,27 @@ function ObtainZPrime(BinnedData::Vector{V}, q::Number{T}) where {T<:Real,V<:Rea
     return sum((BinnedData.^q) .* log.(BinnedData) )#.* (Ps .> 0))
 end
 
+#= 
+For the user, the workflow should be:
+
+1) Choose the q values you want to work with
+
+qs = ObtainQs(qmin, qmax, num_q)
+
+2) Obtain the curves of the partition function for all box sizes. 
+
+Zqs = ComputeAllParition(data, qs)
+
+
+3) Choose the λ_1 and λ_2 values to perform the fits
+
+I need to think better on how to do this automatically 
+    - manual approach is always the safest, but how can we handle large datasets? 
+    - Some minimization of the error? 
+    - Can this lead to wrong results (catching local minima basicaly)?
+
+4) Obtain tau(q) and f(α) 
+τ, α, f = ObtainMultifractalSpectra(Zqs, qs, λ1, λ2)
+=#
+
 end
