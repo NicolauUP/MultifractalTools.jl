@@ -5,6 +5,9 @@ using LsqFit
 using Statistics
 
 
+export nothing
+
+
 function RenormalizeData(data::AbstractMatrix{T}) where T<:Number
     value = sum(abs2.(data))
     return data / sqrt(value)
@@ -48,6 +51,7 @@ end
 
 function BinData(data::AbstractMatrix{T}, l::Number{V}) where {T<:Number,V<:Integer}
 
+    data = RenormalizeData(data) #The user should not do this, we do it here to be sure!
 
     SizeBinned = floor.(Int64,size(data))
     BinnedData = zeros(T, SizeBinned...)
@@ -58,6 +62,28 @@ function BinData(data::AbstractMatrix{T}, l::Number{V}) where {T<:Number,V<:Inte
         BinnedData[BoxIndex] += abs2.(data[idx])
     end
     return BinData
+end
+
+
+function ComputePartitionFunction(BinnedData::AbstractMatrix{T}, q::Number{V}) where {T<:Number,V<:Real}
+    return sum(BinnedData .^ q)
+end
+
+function ComputeMu(BinnedData::AbstractMatrix{T}, q::Number{V}) where {T<:Number,V<:Real} #Option if you don't have the partition function already
+    return (BinnedData .^ q) ./ ComputePartitionFunction(BinnedData, q)
+end
+
+function ComputeMu(BinnedData::AbstractMatrix{T}, q::Number{V}, Zq::Number{T}) where {T<:Number,V<:Real} #option if you already have the partition function
+    return (BinnedData .^ q) ./ Zq
+end
+
+function ObtainEntropy(μs::Vector{V}) where V<:Real
+    return -sum(μs .* log.(μs) )
+end
+
+
+function ObtainZPrime(BinnedData::Vector{V}, q::Number{T}) where {T<:Real,V<:Real}
+    return sum((BinnedData.^q) .* log.(BinnedData) )#.* (Ps .> 0))
 end
 
 end
