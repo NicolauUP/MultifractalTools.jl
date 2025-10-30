@@ -64,6 +64,9 @@ function bin_data(data::AbstractMatrix{T}, l::Integer) where {T<:Number}
     return BinnedData
 end
 
+
+
+
 function compute_partition_function(data::AbstractMatrix{T}, qs::AbstractVector{<:Real}, ls::AbstractVector{<:Integer}) where {T<:Number} 
     
     #1. Renormalize the data so that sum of |data|^2 = 1.
