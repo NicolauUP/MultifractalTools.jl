@@ -69,6 +69,28 @@ function ComputePartitionFunction(BinnedData::AbstractMatrix{T}, q::Number{V}) w
     return sum(BinnedData .^ q)
 end
 
+function ComputePartitionFunction(data::AbstractMatrix{T}, qs::Vector{V}, l::Number) where {T<:Number,V<:Real}
+    Zqs = zeros(T, length(qs))
+    data = RenormalizeData(data) #The user should not do this, we do it here to be sure!
+    BinnedData = BinData(data, l)
+    for (i, q) in enumerate(qs)
+        Zqs[i] = ComputePartitionFunction(BinnedData, q)
+    end
+    return Zqs
+end
+
+function ComputePartitionFunction(data::AbstractMatrix{T}, qs::Vector{T}, ls::Vector{V}) where {T<:Number,V<:Integer}
+    data = RenormalizeData(data) #The user should not do this, we do it here to be sure!
+    Zqs = zeros(T, length(qs), length(ls))
+    for (j, l) in enumerate(ls)
+        BinnedData = BinData(data, l)
+        for (i, q) in enumerate(qs)
+            Zqs[i, j] = ComputePartitionFunction(BinnedData, q)
+        end
+    end
+    return Zqs
+end
+
 function ComputeMu(BinnedData::AbstractMatrix{T}, q::Number{V}) where {T<:Number,V<:Real} #Option if you don't have the partition function already
     return (BinnedData .^ q) ./ ComputePartitionFunction(BinnedData, q)
 end
@@ -86,12 +108,18 @@ function ObtainZPrime(BinnedData::Vector{V}, q::Number{T}) where {T<:Real,V<:Rea
     return sum((BinnedData.^q) .* log.(BinnedData) )#.* (Ps .> 0))
 end
 
+function ObtainQs(qmin::Number{T}, qmax::Number{T}, num_q::Number{V}) where {T<:Real,V<:Integer}
+    return collect(LinRange(qmin, qmax, num_q)) #This could be memory-problematic but for now it's ok
+end
+
+
+
 #= 
 For the user, the workflow should be:
 
-1) Choose the q values you want to work with
+1) Choose the q values you want to work with 
 
-qs = ObtainQs(qmin, qmax, num_q)
+qs = ObtainQs(qmin, qmax, num_q) #Done
 
 2) Obtain the curves of the partition function for all box sizes. 
 
