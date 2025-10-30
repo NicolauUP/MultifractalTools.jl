@@ -5,7 +5,7 @@ using LsqFit
 using Statistics
 
 
-export nothing
+export obtain_qs
 
 
 function renormalize_data(data::AbstractMatrix{T}) where T<:Number
@@ -57,7 +57,8 @@ function bin_data(data::AbstractMatrix{T}, l::Integer) where {T<:Number}
     BinnedData = zeros(T, SizeBinned...)
 
     for idx in CartesianIndices(data) 
-        BoxIndex = floor.(Int64, (idx .- 1 ) / l ) .+ 1
+
+        BoxIndex = (Tuple(idx) .- 1) .÷ l .+ 1
         BinnedData[BoxIndex...] += abs2.(data[idx])
     end
     return BinnedData
