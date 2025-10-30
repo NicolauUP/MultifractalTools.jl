@@ -8,12 +8,12 @@ using Statistics
 export nothing
 
 
-function RenormalizeData(data::AbstractMatrix{T}) where T<:Number
+function renormalize_data(data::AbstractMatrix{T}) where T<:Number
     value = sum(abs2.(data))
     return data / sqrt(value)
 end
 
-function GetDivisors(n::Number{T}) where T<:Integer
+function get_divisors(n::Number{T}) where T<:Integer
     n = abs(n)
     divs = Int[]
     for i in 1:floor(Int, √n)
@@ -30,7 +30,7 @@ end
 
 
 # Find the number up to `cutoff` with the most divisors
-function GetBiggestDivider(cutoff::Number{T}) where T<:Integer
+function get_biggest_divisor(cutoff::Number{T}) where T<:Integer
     best_number = 0
     best_count = 0
     Div_List = []
@@ -49,38 +49,38 @@ function GetBiggestDivider(cutoff::Number{T}) where T<:Integer
 end
 
 
-function BinData(data::AbstractMatrix{T}, l::Number{V}) where {T<:Number,V<:Integer}
+function bin_data(data::AbstractMatrix{T}, l::Number{V}) where {T<:Number,V<:Integer}
 
     data = RenormalizeData(data) #The user should not do this, we do it here to be sure!
 
-    SizeBinned = floor.(Int64,size(data))
+    SizeBinned = floor.(Int64,size(data) ./ l)
     BinnedData = zeros(T, SizeBinned...)
 
     Dimension = length(size(data)) #Get the dimension of the data, either 1D or 2D!
     for idx in CartesianIndices(BinnedData) 
         BoxIndex = floor.(Int64, (idx .- 1 ) / l ) .+ 1
-        BinnedData[BoxIndex] += abs2.(data[idx])
+        BinnedData[BoxInde...] += abs2.(data[idx])
     end
     return BinnedData
 end
 
 
-function ComputePartitionFunction(BinnedData::AbstractMatrix{T}, q::Number{V}) where {T<:Number,V<:Real}
+function compute_partition_function(BinnedData::AbstractMatrix{T}, q::Number{V}) where {T<:Number,V<:Real}
     return sum(BinnedData .^ q)
 end
 
-function ComputePartitionFunction(data::AbstractMatrix{T}, qs::Vector{V}, l::Number) where {T<:Number,V<:Real}
+function compute_partition_function(data::AbstractMatrix{T}, qs::Vector{V}, l::Number) where {T<:Number,V<:Real}
     Zqs = zeros(T, length(qs))
-    data = RenormalizeData(data) #The user should not do this, we do it here to be sure!
+    data = renormalize_datas(data) #The user should not do this, we do it here to be sure!
     BinnedData = BinData(data, l)
     for (i, q) in enumerate(qs)
-        Zqs[i] = ComputePartitionFunction(BinnedData, q)
+        Zqs[i] = compute_partition_function(BinnedData, q)
     end
     return Zqs
 end
 
-function ComputePartitionFunction(data::AbstractMatrix{T}, qs::Vector{T}, ls::Vector{V}) where {T<:Number,V<:Integer}
-    data = RenormalizeData(data) #The user should not do this, we do it here to be sure!
+function compute_partition_function(data::AbstractMatrix{T}, qs::Vector{T}, ls::Vector{V}) where {T<:Number,V<:Integer}
+    data = renormalize_data(data) #The user should not do this, we do it here to be sure!
     Zqs = zeros(T, length(qs), length(ls))
     for (j, l) in enumerate(ls)
         BinnedData = BinData(data, l)
@@ -91,24 +91,24 @@ function ComputePartitionFunction(data::AbstractMatrix{T}, qs::Vector{T}, ls::Ve
     return Zqs
 end
 
-function ComputeMu(BinnedData::AbstractMatrix{T}, q::Number{V}) where {T<:Number,V<:Real} #Option if you don't have the partition function already
-    return (BinnedData .^ q) ./ ComputePartitionFunction(BinnedData, q)
+function compute_mu(BinnedData::AbstractMatrix{T}, q::Number{V}) where {T<:Number,V<:Real} #Option if you don't have the partition function already
+    return (BinnedData .^ q) ./ compute_partition_function(BinnedData, q)
 end
 
-function ComputeMu(BinnedData::AbstractMatrix{T}, q::Number{V}, Zq::Number{T}) where {T<:Number,V<:Real} #option if you already have the partition function
+function compute_mu(BinnedData::AbstractMatrix{T}, q::Number{V}, Zq::Number{T}) where {T<:Number,V<:Real} #option if you already have the partition function
     return (BinnedData .^ q) ./ Zq
 end
 
-function ObtainEntropy(μs::Vector{V}) where V<:Real
+function obtain_entropy(μs::Vector{V}) where V<:Real
     return -sum(μs .* log.(μs) )
 end
 
 
-function ObtainZPrime(BinnedData::Vector{V}, q::Number{T}) where {T<:Real,V<:Real}
+function obtain_zprime(BinnedData::Vector{V}, q::Number{T}) where {T<:Real,V<:Real}
     return sum((BinnedData.^q) .* log.(BinnedData) )#.* (Ps .> 0))
 end
 
-function ObtainQs(qmin::Number{T}, qmax::Number{T}, num_q::Number{V}) where {T<:Real,V<:Integer}
+function obtain_qs(qmin::Number{T}, qmax::Number{T}, num_q::Number{V}) where {T<:Real,V<:Integer}
     return collect(LinRange(qmin, qmax, num_q)) #This could be memory-problematic but for now it's ok
 end
 
