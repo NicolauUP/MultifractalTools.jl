@@ -56,7 +56,7 @@ function bin_data(data::AbstractMatrix{T}, l::Number{V}) where {T<:Number,V<:Int
     SizeBinned = floor.(Int64,size(data) ./ l)
     BinnedData = zeros(T, SizeBinned...)
 
-    for idx in CartesianIndices(BinnedData) 
+    for idx in CartesianIndices(data) 
         BoxIndex = floor.(Int64, (idx .- 1 ) / l ) .+ 1
         BinnedData[BoxIndex...] += abs2.(data[idx])
     end
