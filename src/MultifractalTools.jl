@@ -90,24 +90,11 @@ function compute_partition_function(data::AbstractMatrix{T}, qs::AbstractVector{
 end
 
 
+function conpute_scaling_quantities(Zqs::AbstractMatrix{T}, qs::AbstractVector{<:Real}, ls::AbstractVector{<:Integer}, λ1::Real, λ2::Real) where {T<:Number} 
 
-
-function compute_mu(BinnedData::AbstractMatrix{T}, q::Real) where {T<:Number} #Option if you don't have the partition function already
-    return (BinnedData .^ q) ./ compute_partition_function(BinnedData, q)
+    return nothing
 end
 
-function compute_mu(BinnedData::AbstractMatrix{T}, q::Real, Zq::T) where {T<:Number} #option if you already have the partition function
-    return (BinnedData .^ q) ./ Zq
-end
-
-function obtain_entropy(μs::Vector{Real}) 
-    return -sum(μs .* log.(μs) )
-end
-
-
-function obtain_zprime(BinnedData::Vector{T}, q::Real) where {T<:Number}
-    return sum((BinnedData.^q) .* log.(BinnedData) )#.* (Ps .> 0))
-end
 
 function obtain_qs(qmin::Number, qmax::Number, num_q::Integer) 
     return collect(LinRange(qmin, qmax, num_q)) #This could be memory-problematic but for now it's ok
