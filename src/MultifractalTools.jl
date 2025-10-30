@@ -13,7 +13,7 @@ function renormalize_data(data::AbstractMatrix{T}) where T<:Number
     return data / sqrt(value)
 end
 
-function get_divisors(n::Number{T}) where T<:Integer
+function get_divisors(n::Integer) 
     n = abs(n)
     divs = Int[]
     for i in 1:floor(Int, √n)
@@ -30,7 +30,7 @@ end
 
 
 # Find the number up to `cutoff` with the most divisors
-function get_biggest_divisor(cutoff::Number{T}) where T<:Integer
+function get_biggest_divisor(cutoff::Integer) 
     best_number = 0
     best_count = 0
     Div_List = []
@@ -49,7 +49,7 @@ function get_biggest_divisor(cutoff::Number{T}) where T<:Integer
 end
 
 
-function bin_data(data::AbstractMatrix{T}, l::Number{V}) where {T<:Number,V<:Integer}
+function bin_data(data::AbstractMatrix{T}, l::Integer) where {T<:Number}
 
     data = RenormalizeData(data) #The user should not do this, we do it here to be sure!
 
@@ -64,11 +64,11 @@ function bin_data(data::AbstractMatrix{T}, l::Number{V}) where {T<:Number,V<:Int
 end
 
 
-function compute_partition_function(BinnedData::AbstractMatrix{T}, q::Number{V}) where {T<:Number,V<:Real}
+function compute_partition_function(BinnedData::AbstractMatrix{T}, q::Real) where {T<:Number}
     return sum(BinnedData .^ q)
 end
 
-function compute_partition_function(data::AbstractMatrix{T}, qs::Vector{V}, l::Number) where {T<:Number,V<:Real}
+function compute_partition_function(data::AbstractMatrix{T}, qs::Vector{Real}, l::Integer) where {T<:Number}
     Zqs = zeros(T, length(qs))
     data = renormalize_datas(data) #The user should not do this, we do it here to be sure!
     BinnedData = BinData(data, l)
@@ -78,7 +78,7 @@ function compute_partition_function(data::AbstractMatrix{T}, qs::Vector{V}, l::N
     return Zqs
 end
 
-function compute_partition_function(data::AbstractMatrix{T}, qs::Vector{T}, ls::Vector{V}) where {T<:Number,V<:Integer}
+function compute_partition_function(data::AbstractMatrix{T}, qs::Vector{Real}, ls::Vector{Integer}) where {T<:Number}
     data = renormalize_data(data) #The user should not do this, we do it here to be sure!
     Zqs = zeros(T, length(qs), length(ls))
     for (j, l) in enumerate(ls)
@@ -90,24 +90,24 @@ function compute_partition_function(data::AbstractMatrix{T}, qs::Vector{T}, ls::
     return Zqs
 end
 
-function compute_mu(BinnedData::AbstractMatrix{T}, q::Number{V}) where {T<:Number,V<:Real} #Option if you don't have the partition function already
+function compute_mu(BinnedData::AbstractMatrix{T}, q::Real) where {T<:Number} #Option if you don't have the partition function already
     return (BinnedData .^ q) ./ compute_partition_function(BinnedData, q)
 end
 
-function compute_mu(BinnedData::AbstractMatrix{T}, q::Number{V}, Zq::Number{T}) where {T<:Number,V<:Real} #option if you already have the partition function
+function compute_mu(BinnedData::AbstractMatrix{T}, q::Real, Zq::T) where {T<:Number} #option if you already have the partition function
     return (BinnedData .^ q) ./ Zq
 end
 
-function obtain_entropy(μs::Vector{V}) where V<:Real
+function obtain_entropy(μs::Vector{Real}) 
     return -sum(μs .* log.(μs) )
 end
 
 
-function obtain_zprime(BinnedData::Vector{V}, q::Number{T}) where {T<:Real,V<:Real}
+function obtain_zprime(BinnedData::Vector{T}, q::Real) where {T<:Number}
     return sum((BinnedData.^q) .* log.(BinnedData) )#.* (Ps .> 0))
 end
 
-function obtain_qs(qmin::Number{T}, qmax::Number{T}, num_q::Number{V}) where {T<:Real,V<:Integer}
+function obtain_qs(qmin::Number, qmax::Number, num_q::Integer) 
     return collect(LinRange(qmin, qmax, num_q)) #This could be memory-problematic but for now it's ok
 end
 
