@@ -64,32 +64,33 @@ function bin_data(data::AbstractMatrix{T}, l::Integer) where {T<:Number}
     return BinnedData
 end
 
+function compute_partition_function(data::AbstractMatrix{T}, qs::AbstractVector{<:Real}, ls::AbstractVector{<:Integer}) where {T<:Number} 
+    
+    #1. Renormalize the data so that sum of |data|^2 = 1.
+    data_renorm = renormalize_data(data) 
 
-function compute_partition_function(BinnedData::AbstractMatrix{T}, q::Real) where {T<:Number}
-    return sum(BinnedData .^ q)
-end
+    #2. Define the output matrix
 
-function compute_partition_function(data::AbstractMatrix{T}, qs::Vector{Real}, l::Integer) where {T<:Number}
-    Zqs = zeros(T, length(qs))
-    data = renormalize_datas(data) #The user should not do this, we do it here to be sure!
-    BinnedData = BinData(data, l)
-    for (i, q) in enumerate(qs)
-        Zqs[i] = compute_partition_function(BinnedData, q)
-    end
-    return Zqs
-end
+    Zqs = zeros(T, length(ls), length(qs))
 
-function compute_partition_function(data::AbstractMatrix{T}, qs::Vector{Real}, ls::Vector{Integer}) where {T<:Number}
-    data = renormalize_data(data) #The user should not do this, we do it here to be sure!
-    Zqs = zeros(T, length(qs), length(ls))
-    for (j, l) in enumerate(ls)
-        BinnedData = BinData(data, l)
-        for (i, q) in enumerate(qs)
-            Zqs[i, j] = ComputePartitionFunction(BinnedData, q)
+    for i_l in eachindex(ls)
+        l = ls[i_l]
+        binnedData = bin_data(data_renorm, l)
+        
+
+        # Add the filter to avoid 0, maybe important -> Later
+
+        for i_q in eachindex(qs)
+            q = qs[i_q]
+            Zqs[i_l, i_q] = sum(binnedData .^ q)
         end
     end
+
     return Zqs
 end
+
+
+
 
 function compute_mu(BinnedData::AbstractMatrix{T}, q::Real) where {T<:Number} #Option if you don't have the partition function already
     return (BinnedData .^ q) ./ compute_partition_function(BinnedData, q)
