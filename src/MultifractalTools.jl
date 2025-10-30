@@ -61,7 +61,7 @@ function BinData(data::AbstractMatrix{T}, l::Number{V}) where {T<:Number,V<:Inte
         BoxIndex = floor.(Int64, (idx .- 1 ) / l ) .+ 1
         BinnedData[BoxIndex] += abs2.(data[idx])
     end
-    return BinData
+    return BinnedData
 end
 
 
