@@ -59,7 +59,7 @@ function bin_data(data::AbstractMatrix{T}, l::Integer) where {T<:Number}
     for idx in CartesianIndices(data) 
 
         BoxIndex = (Tuple(idx) .- 1) .÷ l .+ 1
-        BinnedData[BoxIndex...] += abs2.(data[idx])
+        BinnedData[BoxIndex...] += abs2(data[idx]) 
     end
     return BinnedData
 end
