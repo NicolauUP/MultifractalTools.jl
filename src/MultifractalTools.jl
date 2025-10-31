@@ -95,7 +95,40 @@ end
 
 function conpute_scaling_quantities(Zqs::AbstractMatrix{T}, qs::AbstractVector{<:Real}, ls::AbstractVector{<:Integer}, λ1::Real, λ2::Real) where {T<:Number} 
 
-    return nothing
+    #1. Renormalize the data so that sum of |data|^2 = 1.
+    data_renorm = renormalize_data(data) 
+
+    #2. Define the output matrix
+
+    Zqs = zeros(T, length(ls), length(qs))
+    α_qs = zeros(T, length(ls), length(qs))
+    f_qs = zeros(T, length(ls), length(qs))
+
+
+
+    for i_l in eachindex(ls)
+        l = ls[i_l]
+        binnedData = bin_data(data_renorm, l)
+        
+
+        # Add the filter to avoid 0, maybe important -> Later
+
+        for i_q in eachindex(qs)
+            q = qs[i_q]
+            Zqs[i_l, i_q] = sum(binnedData .^ q)
+
+            #Calculate miu and Zprime   
+            miu = (binnedData .^ q) ./ Zqs[i_l, i_q]
+            entropy = sum(miu .* log.(miu))
+
+        end
+
+
+    end
+
+
+    return (Zqs = Zqs, α_qs = α_qs, f_qs = f_qs) #NamedTuple is complete amazing here!! Could be called as Tuple.Zqs etc
+    return 
 end
 
 
