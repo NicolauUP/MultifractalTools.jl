@@ -3,7 +3,7 @@ module MultifractalTools
 using LinearAlgebra
 using LsqFit
 using Statistics
-
+using CairoMakie
 
 export obtain_qs, compute_scaling_quantities
 
@@ -51,8 +51,7 @@ end
 
 function bin_data(data::AbstractMatrix{T}, l::Integer) where {T<:Number}
 
-    data = RenormalizeData(data) #The user should not do this, we do it here to be sure!
-
+    
     SizeBinned = floor.(Int64,size(data) ./ l)
     BinnedData = zeros(T, SizeBinned...)
 
@@ -75,7 +74,7 @@ function compute_scaling_quantities(data::AbstractMatrix{T},qs::AbstractVector{<
     #ls should be computed here!! The user should not have to think on this (only if he wants - kwarg maybe?)
     Zqs = zeros(T, length(ls), length(qs))
     S_qs = zeros(T, length(ls), length(qs))
-    Zprime_qs = zeros(T, length(ls), length(qs))
+    ZPrime_qs = zeros(T, length(ls), length(qs))
 
 
 
@@ -123,22 +122,22 @@ function compute_spectrum(ScalingQuantities::NamedTuple, qs::AbstractVector{<:Re
         q = qs[i_q]
 
         λs = log.(ls ./ maximum(ls))
-        Zs = ScalingQuantities.Zqs[:, i_q]
+        logZs = log.(ScalingQuantities.Zqs[:, i_q])
         Ss = ScalingQuantities.Sqs[:, i_q]
-        logZPrimes = ScalingQuantities.ZPrimes[:, i_q]  
+        ZPrimes = ScalingQuantities.ZPrimes[:, i_q]  
 
 
         #Fit τ(q)
         p0 = [1.0,1.0]
-        fit_τ = curve_fit(power_law_model, log.(λs[λ1:λ2]), logZs[λ1:λ2], p0) #I need to work on how to define this lambda1 or lambda2? Indices, Values?
+        fit_τ = curve_fit(power_law_model, λs[λ1:λ2], logZs[λ1:λ2], p0) #I need to work on how to define this lambda1 or lambda2? Indices, Values?
         τqs[i_q] = fit_τ.param[1]
 
         #Fit α(q)  
-        fit_α = curve_fit(power_law_model, log.(λs[λ1:λ2]), Ss[λ1:λ2], p0)
+        fit_α = curve_fit(power_law_model, λs[λ1:λ2], ZPrimes[λ1:λ2], p0)
         αqs[i_q] = fit_α.param[1]
 
         #Fit f(α)
-        fit_f = curve_fit(power_law_model, log.(λs[λ1:λ2]), logZPrimes[λ1:λ2], p0)
+        fit_f = curve_fit(power_law_model, λs[λ1:λ2], Ss[λ1:λ2], p0)
         fqs[i_q] = fit_f.param[1]
 
     end
@@ -146,7 +145,42 @@ function compute_spectrum(ScalingQuantities::NamedTuple, qs::AbstractVector{<:Re
 end
 
 
+function plot_spectrum(SingularitySpectrumData::NamedTuple, which_type::Symbol = :Spectrum)
 
+
+    if which_type == :Spectrum
+        with_theme(theme_latexfonts()) do 
+        fig = Figure(size = (800,800))
+        ax = Axis(fig[1,1], xlabel = L"\alpha", ylabel = L"f(\alpha)")
+        scatterlines!(ax, SingularitySpectrumData.αs, SingularitySpectrumData.fs, marker = :circle, markersize=12)
+        display(fig)
+        end
+
+    elseif which_type == :Tau
+        with_theme(theme_latexfonts()) do 
+        fig = Figure(size = (800,800))
+        ax = Axis(fig[1,1], xlabel = L"q", ylabel = L"\tau(q)")
+        scatterlines!(ax, SingularitySpectrumData.qs, SingularitySpectrumData.τqs, marker = :circle, markersize=12)
+        display(fig)
+        end
+
+    elseif which_type == :Both
+        with_theme(theme_latexfonts()) do 
+        fig = Figure(size = (1600,800))
+        ax1 = Axis(fig[1,1], xlabel = L"\alpha", ylabel = L"f(\alpha)")
+        scatterlines!(ax1, SingularitySpectrumData.αs, SingularitySpectrumData.fs, marker = :circle, markersize=12)
+
+        ax2 = Axis(fig[1,2], xlabel = L"q", ylabel = L"\tau(q)")
+        scatterlines!(ax2, SingularitySpectrumData.qs, SingularitySpectrumData.τqs, marker = :rect, markersize=12)
+
+        display(fig)
+        end
+
+    else
+        error("which_Type must be :Spectrum, :Tau or :both")
+    end
+
+end
 
 function obtain_qs(qmin::Number, qmax::Number, num_q::Integer) 
     return collect(LinRange(qmin, qmax, num_q)) #This could be memory-problematic but for now it's ok
