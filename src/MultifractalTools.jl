@@ -145,7 +145,7 @@ function compute_spectrum(ScalingQuantities::NamedTuple, qs::AbstractVector{<:Re
 end
 
 
-function plot_spectrum(SingularitySpectrumData::NamedTuple, which_type::Symbol = :Spectrum)
+function plot_spectrum(ScalingQuantities::NamedTuple, SingularitySpectrumData::NamedTuple, which_type::Symbol = :Spectrum)
 
 
     if which_type == :Spectrum
@@ -171,7 +171,7 @@ function plot_spectrum(SingularitySpectrumData::NamedTuple, which_type::Symbol =
         scatterlines!(ax1, SingularitySpectrumData.αs, SingularitySpectrumData.fs, marker = :circle, markersize=12)
 
         ax2 = Axis(fig[1,2], xlabel = L"q", ylabel = L"\tau(q)")
-        scatterlines!(ax2, SingularitySpectrumData.qs, SingularitySpectrumData.τqs, marker = :rect, markersize=12)
+        scatterlines!(ax2, ScalingQuantities.qs, SingularitySpectrumData.τqs, marker = :rect, markersize=12)
 
         display(fig)
         end
