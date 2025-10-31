@@ -115,7 +115,7 @@ function compute_scaling_quantities(data::AbstractMatrix{T},qs::AbstractVector{<
 
     end
 
-    return (Zqs = Zqs, Sqs = S_qs, ZPrimes = ZPrime_qs ) #NamedTuple is complete amazing here!! Could be called as Tuple.Zqs etc
+    return (λs = ls ./ ls[end], Zqs = Zqs, Sqs = S_qs, ZPrimes = ZPrime_qs ) #NamedTuple is complete amazing here!! Could be called as Tuple.Zqs etc
     
     return 
 end
@@ -131,11 +131,11 @@ function compute_spectrum(ScalingQuantities::NamedTuple, qs::AbstractVector{<:Re
     αqs = zeros(eltype(qs), length(qs))
     fqs = zeros(eltype(qs), length(qs))
 
+    λs = log.(ScalingQuantities.ls ./ maximum(ScalingQuantities.ls))
 
     for i_q in eachindex(qs)
         q = qs[i_q]
 
-        λs = log.(ls ./ maximum(ls))
         logZs = log.(ScalingQuantities.Zqs[:, i_q])
         Ss = ScalingQuantities.Sqs[:, i_q]
         ZPrimes = ScalingQuantities.ZPrimes[:, i_q]  
