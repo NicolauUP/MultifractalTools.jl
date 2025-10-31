@@ -93,7 +93,7 @@ function compute_partition_function(data::AbstractMatrix{T}, qs::AbstractVector{
 end
 
 
-function conpute_scaling_quantities(Zqs::AbstractMatrix{T}, qs::AbstractVector{<:Real}, ls::AbstractVector{<:Integer}, λ1::Real, λ2::Real) where {T<:Number} 
+function compute_scaling_quantities(data::AbstractMatrix{T},qs::AbstractVector{<:Real}, ls::AbstractVector{<:Integer}) where {T<:Number} 
 
     #1. Renormalize the data so that sum of |data|^2 = 1.
     data_renorm = renormalize_data(data) 
@@ -101,33 +101,36 @@ function conpute_scaling_quantities(Zqs::AbstractMatrix{T}, qs::AbstractVector{<
     #2. Define the output matrix
 
     Zqs = zeros(T, length(ls), length(qs))
-    α_qs = zeros(T, length(ls), length(qs))
-    f_qs = zeros(T, length(ls), length(qs))
+    S_qs = zeros(T, length(ls), length(qs))
+    Zprime_qs = zeros(T, length(ls), length(qs))
+
+
 
 
 
     for i_l in eachindex(ls)
         l = ls[i_l]
         binnedData = bin_data(data_renorm, l)
-        
+        miu = similar(T, size(binnedData))        
 
-        # Add the filter to avoid 0, maybe important -> Later
-
+        #Possibly add a filter to remogve 0 values - Later
         for i_q in eachindex(qs)
             q = qs[i_q]
             Zqs[i_l, i_q] = sum(binnedData .^ q)
 
-            #Calculate miu and Zprime   
-            miu = (binnedData .^ q) ./ Zqs[i_l, i_q]
-            entropy = sum(miu .* log.(miu))
+
+            miu .= (binnedData .^ q) ./ Zqs[i_l, i_q]
+            S_qs[i_l, i_q] = sum(miu .* log.(miu))
+            ZPrime_qs[i_l,i_q] = sum(miu .* log.(binnedData))
+
 
         end
 
 
     end
 
-
-    return (Zqs = Zqs, α_qs = α_qs, f_qs = f_qs) #NamedTuple is complete amazing here!! Could be called as Tuple.Zqs etc
+    return (Zqs = Zqs, Sqs = S_qs, ZPrimes = ZPrime_qs ) #NamedTuple is complete amazing here!! Could be called as Tuple.Zqs etc
+    
     return 
 end
 
