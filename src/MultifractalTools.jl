@@ -49,6 +49,8 @@ function get_biggest_divisor(cutoff::Integer)
 end
 
 
+
+
 function bin_data(data::AbstractMatrix{T}, l::Integer) where {T<:Number}
 
     
@@ -64,12 +66,24 @@ function bin_data(data::AbstractMatrix{T}, l::Integer) where {T<:Number}
 end
 
 
-function compute_scaling_quantities(data::AbstractMatrix{T},qs::AbstractVector{<:Real}, ls::AbstractVector{<:Integer}) where {T<:Number} 
+function compute_scaling_quantities(data::AbstractMatrix{T},qs::AbstractVector{<:Real}) where {T<:Number} 
 
     #1. Renormalize the data so that sum of |data|^2 = 1.
     data_renorm = renormalize_data(data) 
 
+
+    #Define the sizes!
+    MaxSize = minimum(size(data_renorm)) #Prepared for non-squared arrays, it should not happen nonetheless!
+    L, ls = get_biggest_divisor(MaxSize) #ls is the list of box sizes to be used -> 
+    #=
+
+
+    CHECK THIS ALGEBRA!!!!x
+
+    =# 
+
     #2. Define the output matrix
+
 
     #ls should be computed here!! The user should not have to think on this (only if he wants - kwarg maybe?)
     Zqs = zeros(T, length(ls), length(qs))
