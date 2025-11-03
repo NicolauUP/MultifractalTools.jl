@@ -65,27 +65,65 @@ function bin_data(data::AbstractMatrix{T}, l::Integer) where {T<:Number}
     return BinnedData
 end
 
+function find_best_scaling_size(max_size::Integer, crop_ratio::Float64)
 
-function compute_scaling_quantities(data::AbstractMatrix{T},qs::AbstractVector{<:Real}) where {T<:Number} 
+    min_search_size = floor(Int, max_size * (1.0 - crop_ratio))
 
-    #1. Renormalize the data so that sum of |data|^2 = 1.
-    data_renorm = renormalize_data(data) 
 
+    best_size = max_size 
+    best_divs_list = get_divisors(best_size)
+    best_count = length(best_divs_list)
+
+
+    for n in min_search_size:max_size
+        DivTemp = get_divisors(n)
+        if length(DivTemp) >= best_count
+            best_count = length(DivTemp)
+            best_size = n
+            best_divs_list = DivTemp
+        end
+    end
+
+    return (size = best_size, divisors = best_divs_list)
+end
+
+
+function compute_scaling_quantities(
+    data::AbstractMatrix{T},
+    qs::AbstractVector{<:Real};
+    ls::AbstractVector{<:Integer} = Integer[],
+    crop_to_best_fit::Boolean = true,
+    crop_ratio::Float64 = 0.1
+    ) where {T<:Number} 
+    #The advanced user can provide specific ls values, otherwise we always compute them!
+
+
+
+    
 
     #Define the sizes!
-    MaxSize = minimum(size(data_renorm)) #Prepared for non-squared arrays, it should not happen nonetheless!
-    L, ls = get_biggest_divisor(MaxSize) #ls is the list of box sizes to be used -> 
-    #=
+
+    if isempty(ls)
+
+        if crop_to_best_fit
 
 
-    CHECK THIS ALGEBRA!!!!x
+        #Obtain the possible box sizes
+        biggest_size_info = find_best_scaling_size(minimum(size(data_renorm)), crop_ratio)
+        ls = biggest_size_info.divisors
+        SystemSize = biggest_size_info.size
+        else
+            ls = get_divisors(minimum(size(data_renorm)))
+        end
+    
+    end
 
-    =# 
+    #Crop the data! 
+    data_cropped = data[1:SystemSize, 1:SystemSize] #not centered, should be ok!
 
-    #2. Define the output matrix
-
-
-    #ls should be computed here!! The user should not have to think on this (only if he wants - kwarg maybe?)
+    #1. Renormalize the data so that sum of |data|^2 = 1.
+    data_renorm = renormalize_data(data_cropped) 
+    
     Zqs = zeros(T, length(ls), length(qs))
     S_qs = zeros(T, length(ls), length(qs))
     ZPrime_qs = zeros(T, length(ls), length(qs))
@@ -115,9 +153,7 @@ function compute_scaling_quantities(data::AbstractMatrix{T},qs::AbstractVector{<
 
     end
 
-    return (λs = ls ./ ls[end], Zqs = Zqs, Sqs = S_qs, ZPrimes = ZPrime_qs ) #NamedTuple is complete amazing here!! Could be called as Tuple.Zqs etc
-    
-    return 
+    return (ls= ls , Zqs = Zqs, Sqs = S_qs, ZPrimes = ZPrime_qs ) #NamedTuple is complete amazing here!! Could be called as Tuple.Zqs etc
 end
 
 
@@ -125,7 +161,7 @@ function power_law_model(x, p) #Log Scale
     return p[1] .* x .+ p[2]
 end
 
-function compute_spectrum(ScalingQuantities::NamedTuple, qs::AbstractVector{<:Real}, ls::AbstractVector{<:Integer}, λ1::Real, λ2::Real)
+function compute_spectrum(ScalingQuantities::NamedTuple, qs::AbstractVector{<:Real}, λ1::Integer, λ2::Integer)
 
     τqs = zeros(eltype(qs), length(qs))
     αqs = zeros(eltype(qs), length(qs))
@@ -134,7 +170,7 @@ function compute_spectrum(ScalingQuantities::NamedTuple, qs::AbstractVector{<:Re
     λs = log.(ScalingQuantities.ls ./ maximum(ScalingQuantities.ls))
 
     for i_q in eachindex(qs)
-        q = qs[i_q]
+
 
         logZs = log.(ScalingQuantities.Zqs[:, i_q])
         Ss = ScalingQuantities.Sqs[:, i_q]
@@ -155,11 +191,13 @@ function compute_spectrum(ScalingQuantities::NamedTuple, qs::AbstractVector{<:Re
         fqs[i_q] = fit_f.param[1]
 
     end
-    return (τqs = τqs, αs = αqs, fs = fqs)
+    return (qs=qs, τqs = τqs, αs = αqs, fs = fqs)
 end
 
+function plot_to_fit(ScalingQuantities::NamedTuple, λ1::Integer, λ2::Integer;  )
+end
 
-function plot_spectrum(ScalingQuantities::NamedTuple, SingularitySpectrumData::NamedTuple, which_type::Symbol = :Spectrum)
+function plot_spectrum(SingularitySpectrumData::NamedTuple; which_type::Symbol = :Spectrum)
 
 
     if which_type == :Spectrum
@@ -185,16 +223,17 @@ function plot_spectrum(ScalingQuantities::NamedTuple, SingularitySpectrumData::N
         scatterlines!(ax1, SingularitySpectrumData.αs, SingularitySpectrumData.fs, marker = :circle, markersize=12)
 
         ax2 = Axis(fig[1,2], xlabel = L"q", ylabel = L"\tau(q)")
-        scatterlines!(ax2, ScalingQuantities.qs, SingularitySpectrumData.τqs, marker = :rect, markersize=12)
+        scatterlines!(ax2, SingularitySpectrumData.qs, SingularitySpectrumData.τqs, marker = :rect, markersize=12)
 
         display(fig)
         end
 
     else
-        error("which_Type must be :Spectrum, :Tau or :both")
+        error("which_type must be :Spectrum, :Tau or :Both")
     end
 
 end
+
 
 function obtain_qs(qmin::Number, qmax::Number, num_q::Integer) 
     return collect(LinRange(qmin, qmax, num_q)) #This could be memory-problematic but for now it's ok
