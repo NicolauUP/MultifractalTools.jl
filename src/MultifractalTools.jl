@@ -3,7 +3,6 @@ module MultifractalTools
 using LinearAlgebra
 using LsqFit
 using Statistics
-using CairoMakie
 using GLMakie
 
 
