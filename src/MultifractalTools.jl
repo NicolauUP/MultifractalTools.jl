@@ -4,8 +4,11 @@ using LinearAlgebra
 using LsqFit
 using Statistics
 using CairoMakie
+using GLMakie
 
-export obtain_qs, compute_scaling_quantities
+
+
+export obtain_qs, compute_scaling_quantities, compute_spectrum, plot_spectrum, get_divisors, find_best_scaling_size
 
 
 function renormalize_data(data::AbstractMatrix{T}) where T<:Number
@@ -26,43 +29,6 @@ function get_divisors(n::Integer)
     end
     sort!(divs)
     return divs
-end
-
-
-# Find the number up to `cutoff` with the most divisors
-function get_biggest_divisor(cutoff::Integer) 
-    best_number = 0
-    best_count = 0
-    Div_List = []
-    for n in 1:cutoff
-        DivTemp = get_divisors(n)
-        if length(DivTemp) >= best_count
-            best_count = length(DivTemp)
-            best_number = n
-            if !isempty(Div_List)
-                deleteat!(Div_List, 1)
-            end
-            push!(Div_List, DivTemp)
-        end
-    end
-    return best_number, Div_List[end]
-end
-
-
-
-
-function bin_data(data::AbstractMatrix{T}, l::Integer) where {T<:Number}
-
-    
-    SizeBinned = floor.(Int64,size(data) ./ l)
-    BinnedData = zeros(T, SizeBinned...)
-
-    for idx in CartesianIndices(data) 
-
-        BoxIndex = (Tuple(idx) .- 1) .÷ l .+ 1
-        BinnedData[BoxIndex...] += abs2(data[idx]) 
-    end
-    return BinnedData
 end
 
 function find_best_scaling_size(max_size::Integer, crop_ratio::Float64)
@@ -88,11 +54,27 @@ function find_best_scaling_size(max_size::Integer, crop_ratio::Float64)
 end
 
 
+function bin_data(data::AbstractMatrix{T}, l::Integer) where {T<:Number}
+
+    
+    SizeBinned = floor.(Int64,size(data) ./ l)
+    BinnedData = zeros(T, SizeBinned...)
+
+    for idx in CartesianIndices(data) 
+
+        BoxIndex = (Tuple(idx) .- 1) .÷ l .+ 1
+        BinnedData[BoxIndex...] += abs2(data[idx]) 
+    end
+    return BinnedData
+end
+
+
+
 function compute_scaling_quantities(
     data::AbstractMatrix{T},
     qs::AbstractVector{<:Real};
     ls::AbstractVector{<:Integer} = Integer[],
-    crop_to_best_fit::Boolean = true,
+    crop_to_best_fit::Bool = true,
     crop_ratio::Float64 = 0.1
     ) where {T<:Number} 
     #The advanced user can provide specific ls values, otherwise we always compute them!
@@ -102,27 +84,27 @@ function compute_scaling_quantities(
     
 
     #Define the sizes!
-
+    best_size = minimum(size(data)) #Defining first on the outside scope 
     if isempty(ls)
 
         if crop_to_best_fit
 
 
         #Obtain the possible box sizes
-        biggest_size_info = find_best_scaling_size(minimum(size(data_renorm)), crop_ratio)
+        biggest_size_info = find_best_scaling_size(minimum(size(data)), crop_ratio)
         ls = biggest_size_info.divisors
-        SystemSize = biggest_size_info.size
+        best_size = biggest_size_info.size
         else
-            ls = get_divisors(minimum(size(data_renorm)))
+            ls = get_divisors(minimum(size(data)))
         end
     
     end
 
     #Crop the data! 
-    data_cropped = data[1:SystemSize, 1:SystemSize] #not centered, should be ok!
+    data_cropped = data[1:best_size, 1:best_size] #not centered, should be ok!
 
 
-    Base.@info "Data cropped to $best_size x $best_size (found $(length(best_divs)) divisors)."
+    Base.@info "Data cropped to $best_size x $best_size (found $(length(ls)) divisors)."
     #1. Renormalize the data so that sum of |data|^2 = 1.
     data_renorm = renormalize_data(data_cropped) 
     
@@ -196,7 +178,89 @@ function compute_spectrum(ScalingQuantities::NamedTuple, qs::AbstractVector{<:Re
     return (qs=qs, τqs = τqs, αs = αqs, fs = fqs)
 end
 
-function plot_to_fit(ScalingQuantities::NamedTuple, λ1::Integer, λ2::Integer;  )
+function plot_to_fit(ScalingQuantities::NamedTuple, qs::AbstractVector{<:Real})
+
+    λs = log.(ScalingQuantities.ls ./ maximum(ScalingQuantities.ls))
+
+    Zqs = ScalingQuantities.Zqs
+
+    n_qs = length(qs)
+    n_λs = length(λs)
+
+    # Create the Figure and Sliders
+
+    fig = Figure(size = (900, 700))
+    ax = Axis(fig[2,1], xlabel = L"\log(\lambda)", ylabel = L"\log(Z(q,\lambda))")
+
+    sg_top = SliderGrid(
+        fig[1,1],
+        (label = "Select starting index",range = 1:n_scales, startvalue = 1),
+        (label = "Select ending index", range = 1:n_scales, startvalue = n_scales)
+    )
+
+    sg_right = SliderGrid(
+        fig[2,2],
+        (label = "Select q index", range = 1:n_qs, startvalue = 1)
+    )
+
+
+    #Create the Observables!
+
+    q_idx = sg_right.sliders[1].values
+    λ_start_idx = sg_top.sliders[1].values
+    λ_end_idx = sg_top.sliders[2].values
+
+    
+    log_Zq_obs = @lift(log.(ScalingQuantities.Zqs[1:end, $q_idx]))
+
+    fit_results = @lift begin
+        q_i = $q_idx
+        λ1 = $λ_start_idx
+        λ2 = $λ_end_idx
+         
+        if λ1 >= λ2
+            (title = "Invalid λ range", line = Point2f[])
+        else
+
+            #. 1. Get data
+            log_Zq_data = $log_Zq_obs
+
+
+            # 2. Slice for fitting
+            x_fit = log_λs[λ1:λ2]
+            y_fit = log_Zq_data[λ1:λ2]
+
+            # 3. Fit
+            fit = curve_fit(power_law_model, x_fit, y_fit, [1.0, 1.0])
+            τ_q = fit.param[1]
+            intercept = fit.param[2]
+
+            # 4. Get R^2
+            residulas = y_fit  .- power_law_model(x_fit, fit.param)
+            R2 = 1.0 - sum(residulas .^ 2) / sum((y_fit .- mean(y_fit)) .^ 2)
+
+            # 5. Create line data for the plot!
+            fit_line_data = [Point2f(l, τ_q*l + intercept) for l in log_λs[λ1:λ2]]
+
+
+            # 6. Create title
+            title_str = "R^2 = $(round(R2, digits=4)), q = $(qs[q_i])"
+
+            (title = title_str, line = fit_line_data)
+        end
+    end
+
+    # ---- 5. Plot -----
+
+    scatter!(ax, log_ls, log_Zq_obs, marker = :circle, markersize=10)
+
+    lines!(ax, @lift(fit_results.line), color = :black, linewidth = 2,linestyle=:dash)
+
+    ax.title = @lift(fit_results.title)
+    
+    set_close_to!(sg_right.slides[1],1)
+
+    return fig
 end
 
 function plot_spectrum(SingularitySpectrumData::NamedTuple; which_type::Symbol = :Spectrum)
@@ -266,4 +330,4 @@ I need to think better on how to do this automatically
 τ, α, f = ObtainMultifractalSpectra(Zqs, qs, λ1, λ2)
 =#
 
-end
+end #module
