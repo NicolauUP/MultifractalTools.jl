@@ -121,6 +121,8 @@ function compute_scaling_quantities(
     #Crop the data! 
     data_cropped = data[1:SystemSize, 1:SystemSize] #not centered, should be ok!
 
+
+    Base.@info "Data cropped to $best_size x $best_size (found $(length(best_divs)) divisors)."
     #1. Renormalize the data so that sum of |data|^2 = 1.
     data_renorm = renormalize_data(data_cropped) 
     
