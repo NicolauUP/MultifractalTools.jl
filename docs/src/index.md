@@ -37,7 +37,8 @@ plot_spectrum(spec, which=:Spectrum)
 ```
 
 ```@example 
-
+using MultifractalTools
+using GLMakie
 data = rand(128, 128)
 
 # 1. Get q values
