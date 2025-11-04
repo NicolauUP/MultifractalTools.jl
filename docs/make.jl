@@ -9,7 +9,6 @@ GLMakie.activate!(inline=true) # Ensures plots are embeddable
 DocMeta.setdocmeta!(MultifractalTools, :DocTestSetup, :(using MultifractalTools); recursive=true)
 
 makedocs(
-    warnonly = true,
     sitename = "MultifractalTools.jl",
     modules = [MultifractalTools],
     format = Documenter.HTML(
@@ -23,3 +22,8 @@ makedocs(
     ]
 )
 
+# This is the block that publishes the documentation
+deploydocs(
+    repo = "github.com/NicolauUP/MultifractalTools.jl.git", # Make sure this is correct
+    devbranch = "main"
+)
