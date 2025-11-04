@@ -5,13 +5,12 @@ using MultifractalTools
 
 # 2. Import the "heavy" dependencies this extension needs
 using GLMakie
-using LsqFit     # plot_to_fit re-runs the fit, so it needs this
-using Statistics # plot_to_fit needs mean() for R²
+
+import LsqFit: curve_fit
+import Statistics: mean
 
 
-
-
-function plot_to_fit(ScalingQuantities::NamedTuple, qs::AbstractVector{<:Real})
+function MultifractalTools.plot_to_fit(ScalingQuantities::NamedTuple, qs::AbstractVector{<:Real})
 
     # --- 1. Extract Data ---
     log_λs = log.(ScalingQuantities.ls ./ maximum(ScalingQuantities.ls)) 
@@ -82,10 +81,10 @@ function plot_to_fit(ScalingQuantities::NamedTuple, qs::AbstractVector{<:Real})
         x_fit = log_λs[λ1:λ2]
         y_fit = new_Zq_data[λ1:λ2]
 
-        fit_result = curve_fit(power_law_model, x_fit, y_fit, [1.0, 1.0])
+        fit_result = curve_fit(MultifractalTools.power_law_model, x_fit, y_fit, [1.0, 1.0])
         τ_q, intercept = fit_result.param
 
-        r_squared = 1.0 - sum((y_fit .- power_law_model(x_fit, fit_result.param)).^2) / sum((y_fit .- mean(y_fit)).^2)
+        r_squared = 1.0 - sum((y_fit .- MultifractalTools.power_law_model(x_fit, fit_result.param)).^2) / sum((y_fit .- mean(y_fit)).^2)
 
 
         fit_line_data = [Point2f(l, τ_q * l + intercept) for l in log_λs[λ1:λ2]]
@@ -102,7 +101,7 @@ function plot_to_fit(ScalingQuantities::NamedTuple, qs::AbstractVector{<:Real})
     return fig
 end
 
-function plot_spectrum(SingularitySpectrumData::NamedTuple; which::Symbol = :Spectrum)
+function MultifractalTools.plot_spectrum(SingularitySpectrumData::NamedTuple; which::Symbol = :Spectrum)
 
 
     plot_theme = theme_latexfonts()

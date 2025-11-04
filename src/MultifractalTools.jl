@@ -6,7 +6,7 @@ using Statistics
 
 
 
-export obtain_qs, compute_scaling_quantities, compute_spectrum
+export obtain_qs, compute_scaling_quantities, compute_spectrum, plot_spectrum, plot_to_fit
 
 
 function renormalize_data(data::AbstractMatrix{T}) where T<:Number
@@ -67,6 +67,13 @@ function bin_data(data::AbstractMatrix{T}, l::Integer) where {T<:Number}
 end
 
 
+function plot_to_fit()
+    error("Plotting functionality requires GLMakie. Please run `using GLMakie` to load the plotting extension.")
+end
+
+function plot_spectrum()
+    error("Plotting functionality requires GLMakie. Please run `using GLMakie` to load the plotting extension.")
+end
 
 function compute_scaling_quantities(
     data::AbstractMatrix{T},
