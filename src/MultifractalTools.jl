@@ -7,7 +7,7 @@ using GLMakie
 
 
 
-export obtain_qs, compute_scaling_quantities, compute_spectrum, plot_spectrum, get_divisors, find_best_scaling_size
+export obtain_qs, compute_scaling_quantities, compute_spectrum, plot_spectrum, get_divisors, find_best_scaling_size, plot_to_fit
 
 
 function renormalize_data(data::AbstractMatrix{T}) where T<:Number
@@ -118,7 +118,7 @@ function compute_scaling_quantities(
     for i_l in eachindex(ls)
         l = ls[i_l]
         binnedData = bin_data(data_renorm, l)
-        miu = similar(T, size(binnedData))        
+        miu = similar(binnedData)
 
         #Possibly add a filter to remogve 0 values - Later
         for i_q in eachindex(qs)
@@ -179,97 +179,103 @@ end
 
 function plot_to_fit(ScalingQuantities::NamedTuple, qs::AbstractVector{<:Real})
 
-    λs = log.(ScalingQuantities.ls ./ maximum(ScalingQuantities.ls))
-
-    Zqs = ScalingQuantities.Zqs
-
+    # --- 1. Extract Data ---
+    log_λs = log.(ScalingQuantities.ls ./ maximum(ScalingQuantities.ls)) 
+    Zqs_matrix = ScalingQuantities.Zqs
     n_qs = length(qs)
-    n_λs = length(λs)
+    n_scales = length(ScalingQuantities.ls)
 
-    # Create the Figure and Sliders
-
-    fig = Figure(size = (900, 700))
-    ax = Axis(fig[2,1], xlabel = L"\log(\lambda)", ylabel = L"\log(Z(q,\lambda))")
-
-    sg_top = SliderGrid(
-        fig[1,1],
-        (label = "Select starting index",range = 1:n_scales, startvalue = 1),
-        (label = "Select ending index", range = 1:n_scales, startvalue = n_scales)
+    # --- 2. Create the Figure and Slider ---
+    fig = Figure(size = (700, 600))
+    ax = Axis(fig[1, 1], 
+        xlabel = L"\log(\lambda)", 
+        ylabel = L"\log(Z(q,\lambda))",
+        title = "Scaling Function for q = $(round(qs[1], digits=2))" # Initial title
     )
-
-    sg_right = SliderGrid(
-        fig[2,2],
-        (label = "Select q index", range = 1:n_qs, startvalue = 1)
-    )
-
-
-    #Create the Observables!
-
-    q_idx = sg_right.sliders[1].values
-    λ_start_idx = sg_top.sliders[1].values
-    λ_end_idx = sg_top.sliders[2].values
-
     
-    log_Zq_obs = @lift(log.(ScalingQuantities.Zqs[1:end, $q_idx]))
-
-    fit_results = @lift begin
-        q_i = $q_idx
-        λ1 = $λ_start_idx
-        λ2 = $λ_end_idx
-         
-        if λ1 >= λ2
-            (title = "Invalid λ range", line = Point2f[])
-        else
-
-            #. 1. Get data
-            log_Zq_data = $log_Zq_obs
+    # Right slider (q) - VERTICAL
+    sg_right = SliderGrid(
+        fig[2, 1], # Position: Middle-right
+        (label = "q index", range = 1:n_qs, startvalue = n_qs,color_active = :indianred,color_active_dimmed=(:indianred, 0.5)),
+        (label = "λ1 index (start)", range = 2:n_scales-1, startvalue = 2),
+        (label = "λ2 index (end)", range = 2:n_scales-1, startvalue = n_scales-1)
+    )
+    # --- 3. Create the Observables ---
+    q_idx_obs = sg_right.sliders[1].value 
+    λ1_idx_obs = sg_right.sliders[2].value
+    λ2_idx_obs = sg_right.sliders[3].value
 
 
-            # 2. Slice for fitting
-            x_fit = log_λs[λ1:λ2]
-            y_fit = log_Zq_data[λ1:λ2]
-
-            # 3. Fit
-            fit = curve_fit(power_law_model, x_fit, y_fit, [1.0, 1.0])
-            τ_q = fit.param[1]
-            intercept = fit.param[2]
-
-            # 4. Get R^2
-            residulas = y_fit  .- power_law_model(x_fit, fit.param)
-            R2 = 1.0 - sum(residulas .^ 2) / sum((y_fit .- mean(y_fit)) .^ 2)
-
-            # 5. Create line data for the plot!
-            fit_line_data = [Point2f(l, τ_q*l + intercept) for l in log_λs[λ1:λ2]]
 
 
-            # 6. Create title
-            title_str = "R^2 = $(round(R2, digits=4)), q = $(qs[q_i])"
+    initial_log_Zq = log.(max.(Zqs_matrix[:, 1], 1e-100))
+    log_Zq_obs = Observable([Point2f(l, z) for (l, z) in zip(log_λs[2:end-1], initial_log_Zq[2:end-1])])
+    fit_line_obs = Observable(Point2f[])
 
-            (title = title_str, line = fit_line_data)
-        end
+# Observables for the vertical lines
+    λ1_x_pos = @lift(log_λs[$λ1_idx_obs])
+    λ2_x_pos = @lift(log_λs[$λ2_idx_obs])
+
+
+    vspan!(ax, λ1_x_pos, λ2_x_pos, color = (:green, 0.15))
+
+
+
+    # --- 4. Plot Everything ---
+    # Scatter plot data is linked to the Observable
+    scatter!(ax, log_Zq_obs, color=:blue, markersize=10, label="Raw Data") 
+    lines!(ax, fit_line_obs, color=(:red, 0.5), linewidth=4, linestyle=:dash, label="Fit")
+
+
+
+    # --- 5. THE LISTENER (Simplified) ---
+    # This block runs ONLY when the q slider changes
+    onany(q_idx_obs, λ1_idx_obs, λ2_idx_obs) do q_i, λ1, λ2
+        
+        # A. Calculate new scatter data
+        new_Zq_data = log.(max.(Zqs_matrix[:, q_i], 1e-100))
+        
+        # B. PUSH the new data to the plot's observable
+        log_Zq_obs[] = [Point2f(l, z) for (l, z) in zip(log_λs[2:end-1], new_Zq_data[2:end-1])]
+        
+        # C. Update the title
+        ax.title = "Scaling Function for q = $(round(qs[q_i], digits=2))"
+
+        ax.limits=(log_λs[2]-0.1, log_λs[end-1]+0.1, minimum(new_Zq_data[2:end-1])-0.1, maximum(new_Zq_data[2:end-1])+0.1)
+
+
+        # C. Slice, Fit, and Calculate R²
+        x_fit = log_λs[λ1:λ2]
+        y_fit = new_Zq_data[λ1:λ2]
+
+        fit_result = curve_fit(power_law_model, x_fit, y_fit, [1.0, 1.0])
+        τ_q, intercept = fit_result.param
+
+        r_squared = 1.0 - sum((y_fit .- power_law_model(x_fit, fit_result.param)).^2) / sum((y_fit .- mean(y_fit)).^2)
+
+
+        fit_line_data = [Point2f(l, τ_q * l + intercept) for l in log_λs[λ1:λ2]]
+        fit_line_obs[] = fit_line_data
+        # D. Update the fit line in the plot
+        ax.title = "R² = $(round(r_squared, digits=4))"
+
+
     end
 
-    # ---- 5. Plot -----
-
-    scatter!(ax, log_ls, log_Zq_obs, marker = :circle, markersize=10)
-
-    lines!(ax, @lift(fit_results.line), color = :black, linewidth = 2,linestyle=:dash)
-
-    ax.title = @lift(fit_results.title)
+    # --- 6. Trigger the listener once ---
+    q_idx_obs[] = 1 
     
-    set_close_to!(sg_right.slides[1],1)
-
     return fig
 end
 
-function plot_spectrum(SingularitySpectrumData::NamedTuple; which_type::Symbol = :Spectrum)
+function plot_spectrum(SingularitySpectrumData::NamedTuple; which::Symbol = :Spectrum)
 
 
     plot_theme = theme_latexfonts()
 
     local fig
 
-    if which_type == :Spectrum
+    if which == :Spectrum
         with_theme(plot_theme) do 
         fig = Figure(size = (800,800))
         ax = Axis(fig[1,1], xlabel = L"\alpha", ylabel = L"f(\alpha)")
@@ -277,15 +283,14 @@ function plot_spectrum(SingularitySpectrumData::NamedTuple; which_type::Symbol =
 
         end
 
-    elseif which_type == :Tau
+    elseif which == :Tau
         with_theme(plot_theme) do 
         fig = Figure(size = (800,800))
         ax = Axis(fig[1,1], xlabel = L"q", ylabel = L"\tau(q)")
         scatterlines!(ax, SingularitySpectrumData.qs, SingularitySpectrumData.τqs, marker = :circle, markersize=12)
-
         end
 
-    elseif which_type == :Both
+    elseif which == :Both
         with_theme(plot_theme) do 
         fig = Figure(size = (1600,800))
         ax1 = Axis(fig[1,1], xlabel = L"\alpha", ylabel = L"f(\alpha)")
