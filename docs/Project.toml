@@ -1,0 +1,7 @@
+[deps]
+Documenter = "e30172f5-a6a5-5a46-863b-614d45CD2de4"
+GLMakie = "e9467ef8-e4e7-5192-8a1a-b1aee30e663a"
+MultifractalTools = "d4a7d00b-0e68-4c54-830d-611b26b28009"
+
+[targets]
+dev = ["MultifractalTools"]
