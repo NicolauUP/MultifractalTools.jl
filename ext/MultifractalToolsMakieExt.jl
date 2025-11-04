@@ -9,7 +9,46 @@ using GLMakie
 import LsqFit: curve_fit
 import Statistics: mean
 
+"""
+    plot_to_fit(ScalingQuantities::NamedTuple, qs::AbstractVector{<:Real}) -> Figure
 
+Launches an interactive Makie window to help visually determine the optimal
+scaling region for the linear fits.
+
+This plot shows \$\\log(Z(q, \\lambda))\$ vs \$\\log(\\lambda)\$. It provides sliders for:
+- `q index`: To select which `q` value to inspect.
+- `λ1 index (start)`: To set the starting point of the fit (green shaded region).
+- `λ2 index (end)`: To set the ending point of the fit.
+
+The plot automatically updates with a linear fit (dashed red line) and displays
+the \$R^2\$ value for the selected region in the title, allowing for quick
+assessment of the fit quality.
+
+# Arguments
+- `ScalingQuantities::NamedTuple`: The `NamedTuple` output from
+  `compute_scaling_quantities`.
+- `qs::AbstractVector`: The vector of `q` values used to generate `ScalingQuantities`.
+
+# Returns
+- `GLMakie.Figure`: The interactive Makie figure.
+
+# Examples
+```jldoctest
+julia> # Create mock data for the test
+julia> ls = [1, 2, 4, 8, 16];
+julia> qs = [-5.0, 0.0, 5.0];
+julia> Zqs = rand(5, 3) .+ 1.0;
+julia> Sqs, ZPrimes = (rand(5, 3), rand(5, 3));
+julia> scaling_data = (ls=ls, Zqs=Zqs, Sqs=Sqs, ZPrimes=ZPrimes);
+
+julia> # The function is in the extension, so we must load GLMakie
+julia> using GLMakie;
+
+julia> fig = MultifractalTools.plot_to_fit(scaling_data, qs);
+    
+julia> isa(fig, Figure)
+true
+"""
 function MultifractalTools.plot_to_fit(ScalingQuantities::NamedTuple, qs::AbstractVector{<:Real})
 
     # --- 1. Extract Data ---
@@ -101,6 +140,44 @@ function MultifractalTools.plot_to_fit(ScalingQuantities::NamedTuple, qs::Abstra
     return fig
 end
 
+
+"""
+    plot_spectrum(SingularitySpectrumData::NamedTuple; which::Symbol = :Spectrum) -> Figure
+
+Plots the calculated multifractal spectrum.
+
+This function generates a plot of the singularity spectrum \$f(\\alpha)\$ vs \$\\alpha\$,
+the mass scaling exponent \$\\tau(q)\$ vs \$q\$, or both, based on the `which` keyword.
+
+# Arguments
+- `SingularitySpectrumData::NamedTuple`: The `NamedTuple` output from `compute_spectrum`.
+
+# Keyword Arguments
+- `which::Symbol`: Controls which plot to generate.
+    - `:Spectrum` (default): Plots the singularity spectrum, \$f(\\alpha)\$ vs \$\\alpha\$.
+    - `:Tau`: Plots the multifractal exponent, \$\\tau(q)\$ vs \$q\$.
+    - `:Both`: Generates a two-panel figure with both plots.
+
+# Returns
+- `GLMakie.Figure`: The Makie figure object containing the plot(s).
+
+# Examples
+```jldoctest
+julia> # Create mock data for the test
+julia> qs = -5:5.0;
+julia> τqs = (qs .^ 2) ./ 10; # Mock tau(q)
+julia> αs = qs ./ 5 .+ 0.5;   # Mock alpha(q)
+julia> fs = 1.0 .- (αs .- 0.5).^2; # Mock f(alpha)
+julia> spec_data = (qs=qs, τqs=τqs, αs=αs, fs=fs);
+
+julia> # The function is in the extension, so we must load GLMakie
+julia> using GLMakie;
+
+julia> fig = MultifractalTools.plot_spectrum(spec_data, which=:Both);
+
+julia> isa(fig, Figure)
+true
+"""
 function MultifractalTools.plot_spectrum(SingularitySpectrumData::NamedTuple; which::Symbol = :Spectrum)
 
 
