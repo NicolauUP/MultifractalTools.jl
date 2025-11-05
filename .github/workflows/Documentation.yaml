@@ -17,7 +17,9 @@ jobs:
         uses: julia-actions/setup-julia@v1
         with:
           version: '1.11' # Will use the latest Julia 1.x
-      
+      - name: "Cache dependencies"
+        uses: julia-actions/cache@v2
+        
       - name: "Install dependencies"
         run: julia -e 'using Pkg; Pkg.activate("docs"); Pkg.develop(path="."); Pkg.instantiate()'
       
