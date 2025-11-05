@@ -25,8 +25,11 @@ jobs:
 
       - name: "Install dependencies"
         run: julia -e 'using Pkg; Pkg.activate("docs"); Pkg.develop(path=pwd()); Pkg.instantiate()'
-      
-      - name: "Build and deploy"
+
+        # This step now starts Xvfb AND runs your make.jl script
+      - name: "Build and deploy (with Xvfb)"
+        uses: GabrielBB/xvfb-action@v1
+        with:
+          run: julia --project=docs/ docs/make.jl
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Automatically provided by GitHub
-        run: julia --project=docs/ docs/make.jl
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
