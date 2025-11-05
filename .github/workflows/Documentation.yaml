@@ -19,9 +19,12 @@ jobs:
           version: '1.11' # Will use the latest Julia 1.x
       - name: "Cache dependencies"
         uses: julia-actions/cache@v2
-        
+
+      - name: "Install Xvfb for headless plotting"
+        uses: julia-actions/setup-xvfb@v1
+
       - name: "Install dependencies"
-        run: julia -e 'using Pkg; Pkg.activate("docs"); Pkg.develop(path="."); Pkg.instantiate()'
+        run: julia -e 'using Pkg; Pkg.activate("docs"); Pkg.develop(path=pwd()); Pkg.instantiate()'
       
       - name: "Build and deploy"
         env:
