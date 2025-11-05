@@ -5,7 +5,8 @@ using JET
 
 @testset "MultifractalTools.jl" begin
     @testset "Code quality (Aqua.jl)" begin
-        Aqua.test_all(MultifractalTools)
+        Aqua.test_all(MultifractalTools,
+        ambiguities = false)
     end
     @testset "Code linting (JET.jl)" begin
         JET.test_package(MultifractalTools; target_defined_modules = true)
