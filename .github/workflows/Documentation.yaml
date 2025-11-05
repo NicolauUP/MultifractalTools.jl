@@ -21,7 +21,7 @@ jobs:
         uses: julia-actions/cache@v2
 
       - name: "Install Xvfb for headless plotting"
-        uses: julia-actions/setup-xvfb@v1
+        uses: GabrielBB/xvfb-action@v1
 
       - name: "Install dependencies"
         run: julia -e 'using Pkg; Pkg.activate("docs"); Pkg.develop(path=pwd()); Pkg.instantiate()'
