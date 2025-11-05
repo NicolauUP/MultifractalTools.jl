@@ -9,11 +9,37 @@ using Statistics
 export obtain_qs, compute_scaling_quantities, compute_spectrum, plot_spectrum, plot_to_fit
 
 
+"""
+    obtain_qs(qmin::Number, qmax::Number, num_q::Integer) -> Vector{Float64}
+
+Generates a vector of `num_q` `q`-values, linearly spaced between `qmin` and `qmax`.
+
+# Arguments
+- `qmin`: The minimum value for the `q` range.
+- `qmax`: The maximum value for the `q` range.
+- `num_q`: The number of `q` values to generate.
+
+# Returns
+- A `Vector` of `Float64` values.
+
+# Examples
+```jldoctest
+julia> obtain_qs(-5, 5, 3)
+3-element Vector{Float64}:
+ -5.0
+  0.0
+  5.0
+"""
+function obtain_qs(qmin::Number, qmax::Number, num_q::Integer) 
+    return collect(LinRange(qmin, qmax, num_q)) #This could be memory-problematic but for now it's ok
+end
+
+
 
 """
-    renormalize_data(data::AbstractMatrix)
+    renormalize_data(data::AbstractArray)
 
-Normalizes the input `data` matrix according to its \$L^2\$-norm.
+Normalizes the input `data` Array according to its \$L^2\$-norm.
 
 This ensures that the sum of the absolute squares of the elements is equal to 1.
 Mathematically, this computes:
@@ -23,7 +49,7 @@ This is typically the first step in a multifractal analysis to treat the
 data as a probability distribution (\$\\|\\psi\\|^2 = 1\$).
 
 # Arguments
-- `data::AbstractMatrix`: The input 2D data.
+- `data::AbstractArray`: The input generic Array (1D or 2D) to be renormalized.
 
 # Returns
 - A new `AbstractMatrix` of the same size, with its elements scaled.
@@ -40,7 +66,7 @@ julia> B = MultifractalTools.renormalize_data(A);
 julia> sum(abs2.(B))
 1.0
 """
-function renormalize_data(data::AbstractMatrix{T}) where T<:Number
+function renormalize_data(data::AbstractArray{T}) where T<:Number
     value = sum(abs2.(data))
     return data / sqrt(value)
 end
@@ -206,7 +232,7 @@ julia> MultifractalTools.bin_data(A, 2)
   4.0  16.0
  36.0  64.0
 """
-function bin_data(data::AbstractMatrix{T}, l::Integer) where {T<:Number}
+function bin_data(data::AbstractArray{T}, l::Integer) where {T<:Number}
 
     
     SizeBinned = floor.(Int64,size(data) ./ l)
@@ -278,11 +304,12 @@ julia> scaling_data.ls
 
 """
 function compute_scaling_quantities(
-    data::AbstractMatrix{T},
+    data::AbstractArray{T},
     qs::AbstractVector{<:Real};
     ls::AbstractVector{<:Integer} = Integer[],
     crop_to_best_fit::Bool = true,
-    crop_ratio::Float64 = 0.1
+    crop_ratio::Float64 = 0.1,
+    verbose = false
     ) where {T<:Number} 
     #The advanced user can provide specific ls values, otherwise we always compute them!
 
@@ -308,10 +335,12 @@ function compute_scaling_quantities(
     end
 
     #Crop the data! 
-    data_cropped = data[1:best_size, 1:best_size] #not centered, should be ok! 
+    cropping_indices = [1:best_size for _ in 1:ndims(data)]
 
-
-    Base.@info "Data cropped to $best_size x $best_size (found $(length(ls)) divisors)."
+    data_cropped = data[cropping_indices...] #not centered, should be ok! 
+    if verbose
+    Base.@info "Data cropped to $best_size and (found $(length(ls)) divisors)."
+    end
     #1. Renormalize the data so that sum of |data|^2 = 1.
     data_renorm = renormalize_data(data_cropped) 
     
@@ -478,32 +507,6 @@ function compute_spectrum(ScalingQuantities::NamedTuple, qs::AbstractVector{<:Re
     return (qs=qs, τqs = τqs, αs = αqs, fs = fqs)
 end
 
-
-
-"""
-    obtain_qs(qmin::Number, qmax::Number, num_q::Integer) -> Vector{Float64}
-
-Generates a vector of `num_q` `q`-values, linearly spaced between `qmin` and `qmax`.
-
-# Arguments
-- `qmin`: The minimum value for the `q` range.
-- `qmax`: The maximum value for the `q` range.
-- `num_q`: The number of `q` values to generate.
-
-# Returns
-- A `Vector` of `Float64` values.
-
-# Examples
-```jldoctest
-julia> obtain_qs(-5, 5, 3)
-3-element Vector{Float64}:
- -5.0
-  0.0
-  5.0
-"""
-function obtain_qs(qmin::Number, qmax::Number, num_q::Integer) 
-    return collect(LinRange(qmin, qmax, num_q)) #This could be memory-problematic but for now it's ok
-end
 
 
 end #module
