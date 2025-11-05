@@ -219,7 +219,7 @@ function bin_data(data::AbstractMatrix{T}, l::Integer) where {T<:Number}
     end
     return BinnedData
 end
-
+ 
 
 function plot_to_fit()
     error("Plotting functionality requires GLMakie. Please run `using GLMakie` to load the plotting extension.")
@@ -308,7 +308,7 @@ function compute_scaling_quantities(
     end
 
     #Crop the data! 
-    data_cropped = data[1:best_size, 1:best_size] #not centered, should be ok!
+    data_cropped = data[1:best_size, 1:best_size] #not centered, should be ok! 
 
 
     Base.@info "Data cropped to $best_size x $best_size (found $(length(ls)) divisors)."
