@@ -19,7 +19,7 @@ jobs:
           version: '1.11' # Will use the latest Julia 1.x
       
       - name: "Install dependencies"
-        run: julia -e 'using Pkg; Pkg.activate("docs");  Pkg.develop(".");Pkg.instantiate()'
+        run: julia -e 'using Pkg; Pkg.activate("docs"); Pkg.develop(path="."); Pkg.instantiate()'
       
       - name: "Build and deploy"
         env:
