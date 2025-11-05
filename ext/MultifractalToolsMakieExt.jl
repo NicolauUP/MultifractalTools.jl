@@ -178,7 +178,7 @@ julia> fig = MultifractalTools.plot_spectrum(spec_data, which=:Both);
 julia> isa(fig, Figure)
 true
 """
-function MultifractalTools.plot_spectrum(SingularitySpectrumData::NamedTuple; which::Symbol = :Spectrum)
+function MultifractalTools.plot_spectrum(SingularitySpectrumData::NamedTuple; which::Symbol = :Spectrum, SpectrumLimits = (0.0,3.0, 0.0, 3.0), TauLimits=(0.0,2.0, -2.0,2.0))
 
 
     plot_theme = theme_latexfonts()
@@ -188,7 +188,7 @@ function MultifractalTools.plot_spectrum(SingularitySpectrumData::NamedTuple; wh
     if which == :Spectrum
         with_theme(plot_theme) do 
         fig = Figure(size = (800,800))
-        ax = Axis(fig[1,1], xlabel = L"\alpha", ylabel = L"f(\alpha)")
+        ax = Axis(fig[1,1], xlabel = L"\alpha", ylabel = L"f(\alpha)", limits=SpectrumLimits)
         scatterlines!(ax, SingularitySpectrumData.αs, SingularitySpectrumData.fs, marker = :circle, markersize=12)
 
         end
@@ -196,17 +196,17 @@ function MultifractalTools.plot_spectrum(SingularitySpectrumData::NamedTuple; wh
     elseif which == :Tau
         with_theme(plot_theme) do 
         fig = Figure(size = (800,800))
-        ax = Axis(fig[1,1], xlabel = L"q", ylabel = L"\tau(q)")
+        ax = Axis(fig[1,1], xlabel = L"q", ylabel = L"\tau(q)",limits=TauLimits)
         scatterlines!(ax, SingularitySpectrumData.qs, SingularitySpectrumData.τqs, marker = :circle, markersize=12)
         end
 
     elseif which == :Both
         with_theme(plot_theme) do 
         fig = Figure(size = (1600,800))
-        ax1 = Axis(fig[1,1], xlabel = L"\alpha", ylabel = L"f(\alpha)")
+        ax1 = Axis(fig[1,1], xlabel = L"\alpha", ylabel = L"f(\alpha)", limits=SpectrumLimits)
         scatterlines!(ax1, SingularitySpectrumData.αs, SingularitySpectrumData.fs, marker = :circle, markersize=12)
 
-        ax2 = Axis(fig[1,2], xlabel = L"q", ylabel = L"\tau(q)")
+        ax2 = Axis(fig[1,2], xlabel = L"q", ylabel = L"\tau(q)", limits=TauLimits)
         scatterlines!(ax2, SingularitySpectrumData.qs, SingularitySpectrumData.τqs, marker = :rect, markersize=12)
 
 

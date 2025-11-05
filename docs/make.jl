@@ -9,6 +9,7 @@ GLMakie.activate!(inline=true) # Ensures plots are embeddable
 DocMeta.setdocmeta!(MultifractalTools, :DocTestSetup, :(using MultifractalTools); recursive=true)
 
 makedocs(
+    warnonly = [:autodocs_block, :missing_docs],
     sitename = "MultifractalTools.jl",
     modules = [MultifractalTools],
     format = Documenter.HTML(

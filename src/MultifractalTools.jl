@@ -385,7 +385,7 @@ julia> fit.param
 2-element Vector{Float64}:
  2.0
  1.0
-""" f
+""" 
 function power_law_model(x, p) #Log Scale
     return p[1] .* x .+ p[2]
 end
@@ -505,29 +505,5 @@ function obtain_qs(qmin::Number, qmax::Number, num_q::Integer)
     return collect(LinRange(qmin, qmax, num_q)) #This could be memory-problematic but for now it's ok
 end
 
-
-
-#= 
-For the user, the workflow should be:
-
-1) Choose the q values you want to work with 
-
-qs = ObtainQs(qmin, qmax, num_q) #Done
-
-2) Obtain the curves of the partition function for all box sizes. 
-
-Zqs = ComputeAllParition(data, qs)
-
-
-3) Choose the λ_1 and λ_2 values to perform the fits
-
-I need to think better on how to do this automatically 
-    - manual approach is always the safest, but how can we handle large datasets? 
-    - Some minimization of the error? 
-    - Can this lead to wrong results (catching local minima basicaly)?
-
-4) Obtain tau(q) and f(α) 
-τ, α, f = ObtainMultifractalSpectra(Zqs, qs, λ1, λ2)
-=#
 
 end #module
