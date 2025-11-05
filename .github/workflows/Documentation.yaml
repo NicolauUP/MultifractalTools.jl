@@ -16,10 +16,10 @@ jobs:
       - name: "Set up Julia"
         uses: julia-actions/setup-julia@v1
         with:
-          version: '1' # Will use the latest Julia 1.x
+          version: '1.11' # Will use the latest Julia 1.x
       
       - name: "Install dependencies"
-        run: julia -e 'using Pkg; Pkg.activate("docs"); Pkg.instantiate(); Pkg.dev(".")'
+        run: julia -e 'using Pkg; Pkg.activate("docs"); Pkg.instantiate(); Pkg.develop(".")'
       
       - name: "Build and deploy"
         env:
