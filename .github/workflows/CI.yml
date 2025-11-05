@@ -15,15 +15,18 @@ jobs:
   test:
     name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }}
     runs-on: ${{ matrix.os }}
+    
     timeout-minutes: 60
     permissions: # needed to allow julia-actions/cache to proactively delete old caches that it has created
       actions: write
       contents: read
+    continue-on-error: ${{ matrix.version == 'pre' }} 
     strategy:
       fail-fast: false
       matrix:
         version:
           - '1.11'
+          - '1'
           - 'pre'
         os:
           - ubuntu-latest

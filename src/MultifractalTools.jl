@@ -308,7 +308,8 @@ function compute_scaling_quantities(
     qs::AbstractVector{<:Real};
     ls::AbstractVector{<:Integer} = Integer[],
     crop_to_best_fit::Bool = true,
-    crop_ratio::Float64 = 0.1
+    crop_ratio::Float64 = 0.1,
+    verbose = false
     ) where {T<:Number} 
     #The advanced user can provide specific ls values, otherwise we always compute them!
 
@@ -337,9 +338,9 @@ function compute_scaling_quantities(
     cropping_indices = [1:best_size for _ in 1:ndims(data)]
 
     data_cropped = data[cropping_indices...] #not centered, should be ok! 
-
-
-    Base.@info "Data cropped to $best_size x $best_size (found $(length(ls)) divisors)."
+    if verbose
+    Base.@info "Data cropped to $best_size and (found $(length(ls)) divisors)."
+    end
     #1. Renormalize the data so that sum of |data|^2 = 1.
     data_renorm = renormalize_data(data_cropped) 
     
