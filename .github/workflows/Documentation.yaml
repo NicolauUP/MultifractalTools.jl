@@ -22,7 +22,7 @@ jobs:
 
       - name: "Install dependencies"
         run: julia -e 'using Pkg; Pkg.activate("docs"); Pkg.develop(path=pwd()); Pkg.instantiate()'
-
+        continue-on-error: true
         # This step now starts Xvfb AND runs your make.jl script
       - name: "Build and deploy (with Xvfb)"
         uses: GabrielBB/xvfb-action@v1
