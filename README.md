@@ -61,3 +61,8 @@ https://NicolauUP.github.io/MultifractalTools.jl/stable/
 This package is provided under the MIT License. 
 
 
+## 📄 Citing
+
+If you use `MultifractalTools.jl` in your research, please cite the following paper:
+
+> Ricardo Oliveira, Nicolau Sobrosa, Pedro Ribeiro, Bruno Amorim, and Eduardo V. Castro (2025). *Local Density of States as a Probe of Multifractality in Quasiperiodic Moiré Materials*. arXiv preprint arXiv:2510.20575.
