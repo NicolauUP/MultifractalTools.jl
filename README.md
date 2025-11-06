@@ -66,3 +66,4 @@ This package is provided under the MIT License.
 If you use `MultifractalTools.jl` in your research, please cite the following paper:
 
 > Ricardo Oliveira, Nicolau Sobrosa, Pedro Ribeiro, Bruno Amorim, and Eduardo V. Castro (2025). *Local Density of States as a Probe of Multifractality in Quasiperiodic Moiré Materials*. arXiv preprint arXiv:2510.20575.
+https://arxiv.org/abs/2510.20575
