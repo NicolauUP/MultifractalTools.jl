@@ -1,7 +1,7 @@
 name = "MultifractalTools"
 uuid = "d4a7d00b-0e68-4c54-830d-611b26b28009"
 authors = ["NicolauUP <up201805451@up.pt>"]
-version = "1.0.0"
+version = "1.0.1"
 
 [deps]
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
