@@ -1,7 +1,7 @@
 name = "MultifractalTools"
 uuid = "d4a7d00b-0e68-4c54-830d-611b26b28009"
-authors = ["NicolauUP <up201805451@up.pt>"]
 version = "1.0.1"
+authors = ["NicolauUP <up201805451@up.pt>"]
 
 [deps]
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
@@ -17,7 +17,7 @@ MultifractalToolsMakieExt = "GLMakie"
 [compat]
 Aqua = "0.7"
 GLMakie = "0.13.6"
-JET = "0.9"
+JET = "0.9, 0.11"
 LinearAlgebra = "1.11.0"
 LsqFit = "0.15.1"
 Statistics = "1.11.1"
